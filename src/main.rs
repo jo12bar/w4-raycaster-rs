@@ -1,13 +1,13 @@
 #![no_main]
 #![no_std]
+#![allow(internal_features)]
+#![feature(core_intrinsics)]
 
 use core::{
     arch::wasm32,
-    f32::consts::{FRAC_PI_2, PI},
+    f32::consts::{FRAC_PI_2, PI, TAU},
     panic::PanicInfo,
 };
-
-use libm::{ceilf, cosf, fabsf, floorf, sinf, sqrtf, tanf};
 
 const DRAW_COLORS: *mut u16 = 0x14 as *mut u16;
 const GAMEPAD1: *const u8 = 0x16 as *const u8;
@@ -19,6 +19,8 @@ const BUTTON_DOWN: u8 = 128; // 10000000
 
 /// How far the player moves per update.
 const STEP_SIZE: f32 = 0.045;
+
+const FIVE_PI_SQUARED: f32 = 5.0 * (PI * PI);
 
 /// The player's field of view.
 const FOV: f32 = PI / 2.7;
@@ -78,6 +80,47 @@ fn point_in_wall(x: f32, y: f32) -> bool {
         Some(line) => (line & (0b1 << x as usize)) != 0,
         None => true,
     }
+}
+
+fn sinf(mut x: f32) -> f32 {
+    let y = x / TAU;
+    let z = y - floorf(y);
+    x = z * TAU;
+
+    let sinf_imp = |x: f32| -> f32 {
+        // these magic numbers were discovered 1400 years ago!
+        (16.0 * x * (PI - x)) / (FIVE_PI_SQUARED - (4.0 * x * (PI - x)))
+    };
+
+    if x > PI {
+        -sinf_imp(x - PI)
+    } else {
+        sinf_imp(x)
+    }
+}
+
+fn cosf(x: f32) -> f32 {
+    sinf(x + FRAC_PI_2)
+}
+
+fn tanf(x: f32) -> f32 {
+    sinf(x) / cosf(x)
+}
+
+fn sqrtf(x: f32) -> f32 {
+    unsafe { core::intrinsics::sqrtf32(x) }
+}
+
+fn floorf(x: f32) -> f32 {
+    unsafe { core::intrinsics::floorf32(x) }
+}
+
+fn ceilf(x: f32) -> f32 {
+    unsafe { core::intrinsics::ceilf32(x) }
+}
+
+fn fabsf(x: f32) -> f32 {
+    unsafe { core::intrinsics::fabsf32(x) }
 }
 
 /// Get the distance from (0.0, 0.0) to (x, y).

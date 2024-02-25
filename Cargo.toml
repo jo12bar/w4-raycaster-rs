@@ -12,4 +12,3 @@ strip = true
 panic = "abort"
 
 [dependencies]
-libm = "0.2.8"
