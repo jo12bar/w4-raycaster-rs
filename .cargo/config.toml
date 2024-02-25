@@ -1,0 +1,15 @@
+[build]
+target = "wasm32-unknown-unknown"
+
+[target.wasm32-unknown-unknown]
+runner = "w4 run-native"
+rustflags = [
+    "-C",
+    "link-arg=--import-memory",
+    "-C",
+    "link-arg=--initial-memory=65536",
+    "-C",
+    "link-arg=--max-memory=65536",
+    "-C",
+    "link-arg=-zstack-size=14752",
+]
